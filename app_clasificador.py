@@ -9,19 +9,19 @@ from keras.models import load_model
 st.title("Clasificador de Perros y Gatos")
 
 # Cargar modelo entrenado
+import os
+import gdown
+
 @st.cache_resource
 def load_trained_model():
     model_path = "models/cats_and_dogs_model_5.keras"
-
-    # Crear la carpeta 'models' si no existe
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
     
     if not os.path.exists(model_path):
         file_id = "1-mSWToGWgEu706iTwXTha4hFhOq6aLmK"
         url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, model_path, quiet=False)
+        gdown.download(url, model_path, quiet=False, use_cookies=False)
+    return load_model(model_path) 
 
-    return load_model(model_path)
 
 model = load_trained_model()
 
