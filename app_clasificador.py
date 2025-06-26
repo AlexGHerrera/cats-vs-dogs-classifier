@@ -12,9 +12,12 @@ st.title("Clasificador de Perros y Gatos")
 @st.cache_resource
 def load_trained_model():
     model_path = "models/cats_and_dogs_model_5.keras"
+
+    # Crear la carpeta 'models' si no existe
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
     
     if not os.path.exists(model_path):
-        file_id = "1-mSWToGWgEu706iTwXTha4hFhOq6aLmK"  # <- pon aquí tu ID real
+        file_id = "1-mSWToGWgEu706iTwXTha4hFhOq6aLmK"
         url = f"https://drive.google.com/uc?id={file_id}"
         gdown.download(url, model_path, quiet=False)
 
