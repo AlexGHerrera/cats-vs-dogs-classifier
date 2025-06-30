@@ -1,16 +1,13 @@
-import streamlit as st
-import numpy as np
-from PIL import Image
-import gdown
 import os
+import numpy as np
+import streamlit as st
 import tensorflow as tf
+from PIL import Image
 
 # Título de la app
 st.title("Clasificador de Perros y Gatos")
 
 # Cargar modelo entrenado
-import os
-import gdown
 
 @st.cache_resource
 def load_tflite_model():
@@ -40,7 +37,17 @@ if uploaded_file is not None:
     # Predicción con TFLite
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
-    interpreter.set_tensor(input_details[0]['index'], img.astype(np.float32))
+
+    # Ajustar forma y tipo del input
+    expected_shape = tuple(input_details[0]['shape'])
+    expected_dtype = input_details[0]['dtype']
+
+    img = img.astype(expected_dtype)
+
+    if img.shape != expected_shape:
+        raise ValueError(f"Forma de input incorrecta: {img.shape}, se esperaba {expected_shape}")
+
+    interpreter.set_tensor(input_details[0]['index'], img)
     interpreter.invoke()
     pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
 
