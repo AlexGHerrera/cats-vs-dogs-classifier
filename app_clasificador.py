@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 import gdown
 import os
-from keras.models import load_model
+import tensorflow as tf
 
 # Título de la app
 st.title("Clasificador de Perros y Gatos")
@@ -13,17 +13,13 @@ import os
 import gdown
 
 @st.cache_resource
-def load_trained_model():
-    model_path = "models/cats_and_dogs_model_5.keras"
-    
-    if not os.path.exists(model_path):
-        file_id = "1-mSWToGWgEu706iTwXTha4hFhOq6aLmK"
-        url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, model_path, quiet=False, use_cookies=False)
-    return load_model(model_path) 
+def load_tflite_model():
+    interpreter = tf.lite.Interpreter(model_path="models/cats_and_dogs_model.tflite")
+    interpreter.allocate_tensors()
+    return interpreter
 
 
-model = load_trained_model()
+interpreter = load_tflite_model()
 
 # Tamaño esperado por el modelo
 IMG_SIZE = (224, 224)
@@ -41,8 +37,12 @@ if uploaded_file is not None:
     img = np.array(img) / 255.0
     img = np.expand_dims(img, axis=0)
 
-    # Predicción
-    pred = model.predict(img)[0][0]
+    # Predicción con TFLite
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    interpreter.set_tensor(input_details[0]['index'], img.astype(np.float32))
+    interpreter.invoke()
+    pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
 
     # Mostrar resultado
     if pred > 0.5:
