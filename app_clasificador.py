@@ -34,25 +34,26 @@ if uploaded_file is not None:
     img = np.array(img) / 255.0
     img = np.expand_dims(img, axis=0)
 
-    # Predicción con TFLite
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
+    try:
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
 
-    # Ajustar forma y tipo del input
-    expected_shape = tuple(input_details[0]['shape'])
-    expected_dtype = input_details[0]['dtype']
+        expected_shape = tuple(input_details[0]['shape'])
+        expected_dtype = input_details[0]['dtype']
 
-    img = img.astype(expected_dtype)
+        img = img.astype(expected_dtype)
 
-    if img.shape != expected_shape:
-        raise ValueError(f"Forma de input incorrecta: {img.shape}, se esperaba {expected_shape}")
+        if img.shape != expected_shape:
+            st.error(f"❌ La imagen procesada tiene forma {img.shape}, pero se esperaba {expected_shape}")
+        else:
+            interpreter.set_tensor(input_details[0]['index'], img)
+            interpreter.invoke()
+            pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
 
-    interpreter.set_tensor(input_details[0]['index'], img)
-    interpreter.invoke()
-    pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
-
-    # Mostrar resultado
-    if pred > 0.5:
-        st.markdown(f"### 🐶 Es un **perro** con una probabilidad de {pred:.2f}")
-    else:
-        st.markdown(f"### 🐱 Es un **gato** con una probabilidad de {1 - pred:.2f}")
+            # Mostrar resultado
+            if pred > 0.5:
+                st.markdown(f"### 🐶 Es un **perro** con una probabilidad de {pred:.2f}")
+            else:
+                st.markdown(f"### 🐱 Es un **gato** con una probabilidad de {1 - pred:.2f}")
+    except Exception as e:
+        st.error(f"❌ Error durante la inferencia: {e}")
