@@ -7,9 +7,12 @@ from PIL import Image
 # Título de la app
 st.title("Clasificador de Perros y Gatos")
 
+import os
+st.write("Tamaño del modelo TFLite:", os.path.getsize("models/cats_and_dogs_model.tflite"), "bytes")
+
 # Cargar modelo entrenado
 
-@st.experimental_singleton
+@st.cache_resource
 def load_tflite_model():
     interpreter = tf.lite.Interpreter(model_path="models/cats_and_dogs_model.tflite")
     interpreter.allocate_tensors()
@@ -27,7 +30,7 @@ uploaded_file = st.file_uploader("Sube una imagen de un perro o un gato", type=[
 if uploaded_file is not None:
     # Leer y mostrar imagen
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Imagen cargada", use_column_width=True)
+    st.image(image, caption="Imagen cargada", use_container_width=True)
 
     # Procesar imagen sin OpenCV
     img = image.resize(IMG_SIZE)
