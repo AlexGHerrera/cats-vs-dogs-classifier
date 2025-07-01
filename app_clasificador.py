@@ -1,8 +1,14 @@
 import os
+import sys
 import numpy as np
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
+
+# Mostrar versiones de TensorFlow, Streamlit y Python
+st.write("Versión TensorFlow:", tf.__version__)
+st.write("Versión Streamlit:", st.__version__)
+st.write("Versión Python:", sys.version)
 
 # Título de la app
 st.title("Clasificador de Perros y Gatos")
