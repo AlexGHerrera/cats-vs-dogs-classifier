@@ -8,6 +8,7 @@ from PIL import Image
 # Mostrar versiones de TensorFlow, Streamlit y Python
 st.write("Versión TensorFlow:", tf.__version__)
 st.write("Versión Streamlit:", st.__version__)
+st.write("TensorFlow Lite runtime version:", tf.lite.__version__)
 st.write("Versión Python:", sys.version)
 
 # Título de la app
