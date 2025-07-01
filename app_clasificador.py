@@ -9,7 +9,7 @@ st.title("Clasificador de Perros y Gatos")
 
 # Cargar modelo entrenado
 
-@st.cache_resource
+@st.experimental_singleton
 def load_tflite_model():
     interpreter = tf.lite.Interpreter(model_path="models/cats_and_dogs_model.tflite")
     interpreter.allocate_tensors()
