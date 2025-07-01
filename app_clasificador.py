@@ -5,52 +5,43 @@ import streamlit as st
 import tensorflow as tf
 from PIL import Image
 
-# Mostrar versiones de TensorFlow, Streamlit y Python
+# Mostrar versiones para debugging
 st.write("Versión TensorFlow:", tf.__version__)
 st.write("Versión Streamlit:", st.__version__)
 st.write("TensorFlow Lite runtime version:", tf.lite.__version__)
 st.write("Versión Python:", sys.version)
 
-# Título de la app
-st.title("Clasificador de Perros y Gatos")
+# Parámetros constantes
+MODEL_PATH = "models/cats_and_dogs_model.tflite"
+IMG_SIZE = (224, 224)
 
-import os
-
-st.write("📦 Tamaño del modelo TFLite:", os.path.getsize("models/cats_and_dogs_model.tflite"), "bytes")
-st.write("📁 ¿Existe el archivo?", os.path.exists("models/cats_and_dogs_model.tflite"))
-
-import tensorflow as tf
-st.write("Versión TensorFlow:", tf.__version__)
-
+# Cargar modelo TFLite con caché y manejo de errores
 @st.cache_resource
 def load_tflite_model():
-    model_path = "models/cats_and_dogs_model.tflite"
+    if not os.path.exists(MODEL_PATH):
+        st.error(f"❌ No se encontró el modelo en ruta: {MODEL_PATH}")
+        return None
     try:
-        interpreter = tf.lite.Interpreter(model_path=model_path)
+        interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
         interpreter.allocate_tensors()
-        st.success("✅ Modelo cargado correctamente")
+        st.success("✅ Modelo TFLite cargado correctamente")
         return interpreter
     except Exception as e:
         st.error(f"❌ Error cargando modelo: {e}")
         return None
 
-interpreter = load_tflite_model()
-
-# Tamaño esperado por el modelo
-IMG_SIZE = (224, 224)
-
-# Subida de imagen
-uploaded_file = st.file_uploader("Sube una imagen de un perro o un gato", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None:
-    # Leer y mostrar imagen
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Imagen cargada", use_container_width=True)
-
-    # Procesar imagen sin OpenCV
+# Función para preprocesar imagen
+def preprocess_image(image: Image.Image):
     img = image.resize(IMG_SIZE)
     img = np.array(img) / 255.0
     img = np.expand_dims(img, axis=0)
+    return img
+
+# Función para hacer la predicción
+def predict(interpreter, img: np.ndarray):
+    if interpreter is None:
+        st.error("❌ Modelo no cargado, no se puede predecir")
+        return None
 
     try:
         input_details = interpreter.get_input_details()
@@ -63,15 +54,37 @@ if uploaded_file is not None:
 
         if img.shape != expected_shape:
             st.error(f"❌ La imagen procesada tiene forma {img.shape}, pero se esperaba {expected_shape}")
-        else:
-            interpreter.set_tensor(input_details[0]['index'], img)
-            interpreter.invoke()
-            pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
+            return None
 
-            # Mostrar resultado
-            if pred > 0.5:
-                st.markdown(f"### 🐶 Es un **perro** con una probabilidad de {pred:.2f}")
-            else:
-                st.markdown(f"### 🐱 Es un **gato** con una probabilidad de {1 - pred:.2f}")
+        interpreter.set_tensor(input_details[0]['index'], img)
+        interpreter.invoke()
+        pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
+        return pred
     except Exception as e:
         st.error(f"❌ Error durante la inferencia: {e}")
+        return None
+
+# Título
+st.title("Clasificador de Perros y Gatos")
+
+# Mostrar info de modelo
+if os.path.exists(MODEL_PATH):
+    st.write(f"📦 Tamaño del modelo TFLite: {os.path.getsize(MODEL_PATH)} bytes")
+else:
+    st.error(f"❌ No se encontró el modelo TFLite en {MODEL_PATH}")
+
+# Cargar modelo
+interpreter = load_tflite_model()
+
+# Carga y predicción con imagen subida
+uploaded_file = st.file_uploader("Sube una imagen de un perro o un gato", type=["jpg", "jpeg", "png"])
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Imagen cargada", use_container_width=True)
+    img = preprocess_image(image)
+    pred = predict(interpreter, img)
+    if pred is not None:
+        if pred > 0.5:
+            st.markdown(f"### 🐶 Es un **perro** con una probabilidad de {pred:.2f}")
+        else:
+            st.markdown(f"### 🐱 Es un **gato** con una probabilidad de {1 - pred:.2f}")
