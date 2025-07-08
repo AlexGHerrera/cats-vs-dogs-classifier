@@ -6,6 +6,7 @@ from PIL import Image
 
 # Parámetros constantes
 IMG_SIZE = (224, 224)
+MODEL_PATH = "models/cats_and_dogs_model.tflite"
 MODEL_URL = "https://drive.google.com/uc?export=download&id=1fpvhMNW3tjX-s7eN5Wsg6DMl08iua-dv"
 
 import requests
