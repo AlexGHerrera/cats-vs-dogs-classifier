@@ -1,25 +1,36 @@
 import os
-import sys
 import numpy as np
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
 
-# Mostrar versiones para debugging
-st.write("Versión TensorFlow:", tf.__version__)
-st.write("Versión Streamlit:", st.__version__)
-st.write("TensorFlow Lite runtime version:", tf.lite.__version__)
-st.write("Versión Python:", sys.version)
-
 # Parámetros constantes
-MODEL_PATH = "models/cats_and_dogs_model.tflite"
 IMG_SIZE = (224, 224)
+# Pega aquí el enlace directo de descarga de tu modelo en Google Drive (usa gdocs2direct o similar)
+MODEL_URL = "https://drive.google.com/uc?export=download&id=1fpvhMNW3tjX-s7eN5Wsg6DMl08iua-dv"
+
+import requests
+
+def download_model_if_needed():
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    if not os.path.exists(MODEL_PATH):
+        st.warning(f"Descargando modelo desde Google Drive... Esto puede tardar unos segundos.")
+        try:
+            with requests.get(MODEL_URL, stream=True) as r:
+                r.raise_for_status()
+                with open(MODEL_PATH, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            st.success("✅ Modelo descargado correctamente.")
+        except Exception as e:
+            st.error(f"❌ Error descargando el modelo: {e}")
+            return False
+    return True
 
 # Cargar modelo TFLite con caché y manejo de errores
 @st.cache_resource
 def load_tflite_model():
-    if not os.path.exists(MODEL_PATH):
-        st.error(f"❌ No se encontró el modelo en ruta: {MODEL_PATH}")
+    if not download_model_if_needed():
         return None
     try:
         interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
@@ -67,24 +78,24 @@ def predict(interpreter, img: np.ndarray):
 # Título
 st.title("Clasificador de Perros y Gatos")
 
-# Mostrar info de modelo
-if os.path.exists(MODEL_PATH):
-    st.write(f"📦 Tamaño del modelo TFLite: {os.path.getsize(MODEL_PATH)} bytes")
-else:
-    st.error(f"❌ No se encontró el modelo TFLite en {MODEL_PATH}")
-
 # Cargar modelo
 interpreter = load_tflite_model()
 
-# Carga y predicción con imagen subida
-uploaded_file = st.file_uploader("Sube una imagen de un perro o un gato", type=["jpg", "jpeg", "png"])
-if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Imagen cargada", use_container_width=True)
-    img = preprocess_image(image)
-    pred = predict(interpreter, img)
-    if pred is not None:
-        if pred > 0.5:
-            st.markdown(f"### 🐶 Es un **perro** con una probabilidad de {pred:.2f}")
-        else:
-            st.markdown(f"### 🐱 Es un **gato** con una probabilidad de {1 - pred:.2f}")
+if interpreter is not None:
+    uploaded_file = st.file_uploader("Sube una imagen de un perro o un gato", type=["jpg", "jpeg", "png"])
+    if uploaded_file is not None:
+        try:
+            image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Imagen cargada", use_container_width=True)
+            img = preprocess_image(image)
+            with st.spinner("Realizando predicción..."):
+                pred = predict(interpreter, img)
+            if pred is not None:
+                if pred > 0.5:
+                    st.markdown(f"### 🐶 Es un **perro** con una probabilidad de {pred:.2f}")
+                else:
+                    st.markdown(f"### 🐱 Es un **gato** con una probabilidad de {1-pred:.2f}")
+        except Exception as e:
+            st.error(f"❌ Error procesando la imagen: {e}")
+else:
+    st.warning("Carga fallida del modelo. No puedes hacer predicciones.")
