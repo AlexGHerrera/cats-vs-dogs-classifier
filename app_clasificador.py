@@ -85,7 +85,7 @@ if interpreter is not None:
     if uploaded_file is not None:
         try:
             image = Image.open(uploaded_file).convert("RGB")
-            st.image(image, caption="Imagen cargada", use_container_width=True)
+            st.image(image, caption="Imagen cargada")
             img = preprocess_image(image)
             with st.spinner("Realizando predicción..."):
                 pred = predict(interpreter, img)
