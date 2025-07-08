@@ -4,7 +4,7 @@ Este proyecto implementa un modelo de clasificación de imágenes para distingui
 
 Incluye una **app interactiva en Streamlit** para probar el modelo directamente con imágenes externas:
 
-👉 [Probar el clasificador en Streamlit](https://streamlit.app/tu-enlace-aqui) 👈
+👉 [Probar el clasificador en Streamlit](https://cats-vs-dogs-classifier-alex-gherrera.streamlit.app) 👈
 
 ---
 
@@ -51,7 +51,7 @@ Puedes subir una imagen desde tu ordenador (JPG o PNG) y el modelo predirá si s
 
 ### 🎯 Accede a la demo aquí:
 
-[https://streamlit.app/tu-enlace-aqui](https://streamlit.app/tu-enlace-aqui)
+[https://cats-vs-dogs-classifier-alex-gherrera.streamlit.app](https://cats-vs-dogs-classifier-alex-gherrera.streamlit.app)
 
 ---
 
